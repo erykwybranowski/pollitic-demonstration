@@ -41,7 +41,9 @@ This stack describes the full application; the public snapshot includes selected
 
 ![Pollitic.EU country page](assets/country-poland.png)
 
-[Home page screenshot](assets/home.png). Captured from the public application on 2026-10-16; the live site continues to evolve.
+![Home page screenshot](assets/home.png)
+
+Captured from the public application on 2026-10-16; the live site continues to evolve.
 
 ## Repository scope
 
