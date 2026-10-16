@@ -1,0 +1,265 @@
+﻿<div class="polling-graph-container">
+  <div class="pollster-sticky-wrapper" *ngIf="uniquePollsters.length">
+    <div class="pollster-sticky-inner">
+      <div class="pollster-toggle">
+        <button
+          type="button"
+          class="pollster-chip active"
+          (click)="togglePollsterFilters()"
+          [attr.aria-expanded]="showPollsterFilters"
+        >
+          {{ 'pollingGraph.pollster.settings' | t }}
+        </button>
+      </div>
+
+      <div
+        class="pollster-filters"
+        *ngIf="showPollsterFilters && uniquePollsters.length"
+      >
+        <label class="app-checkbox-wrapper">
+          <input type="checkbox" class="app-checkbox-input"
+            [checked]="equalPollsterWeight"
+            (change)="onEqualPollsterWeightChange($any($event.target).checked)">
+          <span class="app-checkbox"><span class="app-checkbox-inner"></span></span>
+          <span>{{ 'pollingGraph.pollster.equalWeight' | t }}</span>
+        </label>
+        <p class="pollster-weight-description">
+          {{ (equalPollsterWeight ? 'pollingGraph.pollster.equalWeightDescription' : 'pollingGraph.pollster.pollWeightDescription') | t }}
+        </p>
+        <div class="pollster-filters-actions">
+          <button
+            type="button"
+            class="pollster-action-button"
+            (click)="selectAllPollsters()"
+          >
+            {{ 'pollingGraph.pollster.selectAll' | t }}
+          </button>
+          <button
+            type="button"
+            class="pollster-action-button"
+            (click)="deselectAllPollsters()"
+          >
+            {{ 'pollingGraph.pollster.clearAll' | t }}
+          </button>
+        </div>
+
+        <div class="pollster-chips">
+          <button
+            type="button"
+            class="pollster-chip"
+            *ngFor="let pollster of uniquePollsters"
+            [ngClass]="{ 'active': isPollsterSelected(pollster) }"
+            (click)="togglePollster(pollster)"
+          >
+            {{ pollster }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="polling-card range-controls">
+    <div class="monthly-support" *ngIf="supportMonthOptions.length">
+      <div class="monthly-support-top-row">
+        <div class="monthly-support-header">
+          <button
+            type="button"
+            class="icon-arrow-button monthly-support-arrow"
+            [attr.aria-label]="'pollingGraph.monthly.newerMonth' | t"
+            [disabled]="isNextSupportMonthDisabled()"
+            (click)="goToNextSupportMonth()"
+          >
+            <i class="ti ti-arrow-badge-left icon-default"></i>
+            <i class="ti ti-arrow-badge-left-filled icon-hover"></i>
+          </button>
+          <label class="monthly-support-select">
+            {{ 'pollingGraph.monthly.month' | t }}
+            <select [(ngModel)]="selectedSupportMonth" (change)="onSupportMonthChange()">
+              <option *ngFor="let month of supportMonthOptions" [value]="month">
+                {{ formatMonthLabel(month) }}
+              </option>
+            </select>
+          </label>
+          <button
+            type="button"
+            class="icon-arrow-button monthly-support-arrow"
+            [attr.aria-label]="'pollingGraph.monthly.olderMonth' | t"
+            [disabled]="isPreviousSupportMonthDisabled()"
+            (click)="goToPreviousSupportMonth()"
+          >
+            <i class="ti ti-arrow-badge-right icon-default"></i>
+            <i class="ti ti-arrow-badge-right-filled icon-hover"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="config-variants" *ngIf="configOptions.length > 1">
+        <div class="config-variants-header">
+          {{ 'pollingGraph.config.header' | t }}
+        </div>
+
+        <div class="config-variants-list">
+          <button
+            type="button"
+            class="config-variant-chip"
+            *ngFor="let config of configOptions"
+            [ngClass]="{ 'active': isConfigSelected(config.key) }"
+            (click)="onConfigVariantSingleSelect(config.key)"
+          >
+            <span class="config-variant-content">
+              <span
+                class="config-variant-checkbox"
+                (click)="onConfigVariantCheckboxClick(config.key, $event)"
+              >
+                <span
+                  class="config-variant-checkbox-inner"
+                  *ngIf="isConfigSelected(config.key)"
+                ></span>
+              </span>
+
+              <span class="config-variant-label">
+                {{ config.label }}
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="pollster-range-info"
+        *ngIf="monthlyUsedPollsters?.length || getMonthlyExcludedPollsters().length"
+      >
+      {{ 'pollingGraph.pollster.inRange' | t }}
+      <span class="pollster-range-list">
+        <span class="pollster-range-item" *ngFor="let pollster of monthlyUsedPollsters">
+          <button type="button" class="pollster-exclude-button" [attr.aria-label]="'pollingGraph.pollster.exclude' | t:{ pollster: pollster.name }" [title]="'pollingGraph.pollster.exclude' | t:{ pollster: pollster.name }" (click)="excludePollster(pollster.name)">
+            <i class="ti ti-x"></i>
+          </button>
+          {{ pollster.name }} ({{ pollster.count }})
+        </span>
+      </span>
+      <div class="excluded-pollsters" *ngIf="getMonthlyExcludedPollsters().length">
+        <span class="excluded-pollsters-label">{{ 'pollingGraph.pollster.excluded' | t }}</span>
+        <button type="button" class="excluded-pollster" *ngFor="let pollster of getMonthlyExcludedPollsters()" (click)="restorePollster(pollster.name)" [title]="'pollingGraph.pollster.restore' | t:{ pollster: pollster.name }">
+          {{ pollster.name }} ({{ pollster.count }})
+        </button>
+      </div>
+      </div>
+
+      <app-support-graph
+        class="support-graph-polling"
+        *ngIf="monthlySupportData.length"
+        [parties]="monthlySupportParties"
+        [supportData]="monthlySupportData"
+        [showLastPollInfo]="true"
+        [showPollDetails]="false"
+        (partySelected)="onPartySelected($event)">
+      </app-support-graph>
+    </div>
+  </section>
+
+  <section class="polling-card chart-card">
+    <div class="chart-header">
+      <h4>{{ 'pollingGraph.chart.title' | t }}</h4>
+      <p>{{ 'pollingGraph.chart.description' | t }}</p>
+    </div>
+
+    <div class="range-buttons">
+      <button
+        type="button"
+        class="range-button"
+        [ngClass]="{ 'active': rangeMode === '1y' }"
+        (click)="onRangeButtonClick('1y')"
+      >
+        {{ 'pollingGraph.range.1y' | t }}
+      </button>
+
+      <button
+        type="button"
+        class="range-button"
+        [ngClass]="{ 'active': rangeMode === '2y' }"
+        (click)="onRangeButtonClick('2y')"
+      >
+        {{ 'pollingGraph.range.2y' | t }}
+      </button>
+
+      <button
+        type="button"
+        class="range-button"
+        [ngClass]="{ 'active': rangeMode === '5y' }"
+        (click)="onRangeButtonClick('5y')"
+      >
+        {{ 'pollingGraph.range.5y' | t }}
+      </button>
+
+      <button
+        type="button"
+        class="range-button"
+        [ngClass]="{ 'active': rangeMode === 'max' }"
+        (click)="onRangeButtonClick('max')"
+      >
+        {{ 'pollingGraph.range.max' | t }}
+      </button>
+
+      <button
+        type="button"
+        class="range-button"
+        [ngClass]="{ 'active': rangeMode === 'custom' }"
+        (click)="onRangeButtonClick('custom')"
+      >
+        {{ 'pollingGraph.range.custom' | t }}
+      </button>
+    </div>
+
+    <div class="custom-range" *ngIf="rangeMode === 'custom'">
+      <label>
+        {{ 'pollingGraph.range.from' | t }}
+        <select [(ngModel)]="customStartMonth" (change)="onCustomRangeChange()">
+          <option *ngFor="let month of allMonths" [value]="month">
+            {{ formatMonthLabel(month) }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        {{ 'pollingGraph.range.to' | t }}
+        <select [(ngModel)]="customEndMonth" (change)="onCustomRangeChange()">
+          <option *ngFor="let month of allMonths" [value]="month">
+            {{ formatMonthLabel(month) }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div
+      class="pollster-range-info"
+      *ngIf="timeSeriesUsedPollsters?.length || getTimeSeriesExcludedPollsters().length"
+    >
+      {{ 'pollingGraph.pollster.inRange' | t }}
+      <span class="pollster-range-list">
+        <span class="pollster-range-item" *ngFor="let pollster of timeSeriesUsedPollsters">
+          <button type="button" class="pollster-exclude-button" [attr.aria-label]="'pollingGraph.pollster.exclude' | t:{ pollster: pollster.name }" [title]="'pollingGraph.pollster.exclude' | t:{ pollster: pollster.name }" (click)="excludePollster(pollster.name)">
+            <i class="ti ti-x"></i>
+          </button>
+          {{ pollster.name }} ({{ pollster.count }})
+        </span>
+      </span>
+      <div class="excluded-pollsters" *ngIf="getTimeSeriesExcludedPollsters().length">
+        <span class="excluded-pollsters-label">{{ 'pollingGraph.pollster.excluded' | t }}</span>
+        <button type="button" class="excluded-pollster" *ngFor="let pollster of getTimeSeriesExcludedPollsters()" (click)="restorePollster(pollster.name)" [title]="'pollingGraph.pollster.restore' | t:{ pollster: pollster.name }">
+          {{ pollster.name }} ({{ pollster.count }})
+        </button>
+      </div>
+    </div>
+
+    <div class="canvas-shell">
+      <canvas #pollingGraphCanvas></canvas>
+    </div>
+  </section>
+</div>
+
+
+
+
+
+
